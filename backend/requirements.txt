@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+selectolax
+apscheduler
+pydantic
+python-dotenv
+curl_cffi
+xhtml2pdf
+psycopg2-binary
+groq
