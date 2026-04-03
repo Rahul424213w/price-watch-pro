@@ -2,7 +2,6 @@
 
 PriceWatch Pro is a high-performance, production-grade Amazon market intelligence system. It now features **Groq-Powered Neural Intelligence** (Llama 3) for strategic decision-making, alongside real-time telemetry, geographic price arbitrage detection, and advanced Buy Box analytics through a premium glassmorphic interface.
 
-🏆 **Hackathon Winner & Neural Strategic Hub**
 
 ## 🚀 Neural Intelligence (New)
 The platform now transforms raw market data into actionable strategies using the **Groq Llama 3** engine.
