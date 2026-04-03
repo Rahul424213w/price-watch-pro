@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, ShieldCheck, Globe, BarChart3, ArrowRight, Activity, Cpu, Brain } from 'lucide-react';
+import { Zap, ShieldCheck, Globe, BarChart3, ArrowRight, Activity, Cpu, Brain, Network, Bell } from 'lucide-react';
 
 const Landing = () => {
   return (
@@ -59,6 +59,20 @@ const Landing = () => {
              </div>
              <h3 className="font-black text-xl uppercase tracking-tighter italic">Neural Advisor</h3>
              <p className="text-sm text-slate-500 font-medium leading-snug">Llama 3 powered pricing strategies, undercut predictions, and regional intelligence.</p>
+          </div>
+          <div className="glass-card p-8 rounded-3xl flex flex-col items-center gap-4 hover:-translate-y-2 transition-all">
+             <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500">
+                <Network size={32} />
+             </div>
+             <h3 className="font-black text-xl uppercase tracking-tighter italic">Distributed Scale</h3>
+             <p className="text-sm text-slate-500 font-medium leading-snug">Celery and Redis powered task execution architecture for global concurrency.</p>
+          </div>
+          <div className="glass-card p-8 rounded-3xl flex flex-col items-center gap-4 hover:-translate-y-2 transition-all border-primary/20 shadow-xl shadow-primary/5">
+             <div className="w-14 h-14 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500">
+                <Bell size={32} />
+             </div>
+             <h3 className="font-black text-xl uppercase tracking-tighter italic">Sentinel Alerts</h3>
+             <p className="text-sm text-slate-500 font-medium leading-snug">Autonomous SMTP protocols trigger when vital market thresholds are breached.</p>
           </div>
         </div>
       </div>

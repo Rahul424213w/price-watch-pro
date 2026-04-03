@@ -33,7 +33,7 @@ const LiveClock = () => {
 };
 
 const Logo = () => (
-  <div className="flex items-center gap-3 px-2 group cursor-pointer">
+  <Link to="/" className="flex items-center gap-3 px-2 group cursor-pointer">
     <div className="relative">
       <div className="w-10 h-10 primary-gradient rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:rotate-12 transition-transform duration-500">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -48,7 +48,7 @@ const Logo = () => (
       <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 uppercase tracking-tighter leading-none">PriceWatch</h1>
       <p className="text-[8px] font-black text-secondary tracking-[0.3em] uppercase opacity-70">Intelligence Pro</p>
     </div>
-  </div>
+  </Link>
 );
 
 const Layout = ({ children }) => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingDown, Package, ShieldCheck, Zap, Info, Clock, AlertTriangle, RefreshCw, BarChart3, Download, Map, PieChart, ExternalLink, Loader2 } from 'lucide-react';
 import PriceChart from '../components/PriceChart';
 import SellerTable from '../components/SellerTable';
@@ -8,6 +8,7 @@ import useStore from '../store';
 import { formatLocalizedDate } from '../utils/dateUtils';
 
 const ProductDetail = () => {
+  const navigate = useNavigate();
   const { asin } = useParams();
   const { 
     getProductDetails, 
@@ -77,10 +78,10 @@ const ProductDetail = () => {
     <div className="flex flex-col gap-10 pb-20">
       {/* Header with Back Button and Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <Link to="/dashboard" className="flex items-center gap-2 text-neutral-custom hover:text-primary transition-all font-bold group">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-neutral-custom hover:text-primary transition-all font-bold group">
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          Command Center
-        </Link>
+          Back
+        </button>
         <div className="flex flex-wrap items-center gap-3">
            <div className="flex bg-white rounded-xl shadow-sm border border-slate-100 p-1">
               <button 

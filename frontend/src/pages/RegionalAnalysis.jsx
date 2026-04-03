@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { MapPin, ArrowLeft, RefreshCw, AlertCircle, TrendingDown, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -7,6 +7,7 @@ import useStore from '../store';
 
 const RegionalAnalysis = () => {
   const { asin } = useParams();
+  const navigate = useNavigate();
   const { config } = useStore();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,9 +49,9 @@ const RegionalAnalysis = () => {
     <div className="flex flex-col gap-10">
       <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div className="flex items-center gap-6">
-           <Link to={`/product/${asin}`} className="p-3 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all">
+           <button onClick={() => navigate(-1)} className="p-3 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all">
               <ArrowLeft size={20} />
-           </Link>
+           </button>
            <div>
               <p className="text-[10px] font-black text-secondary uppercase tracking-widest leading-none mb-1">Geographic Spread Analysis</p>
               <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter italic">{product?.title}</h1>
@@ -139,7 +140,7 @@ const RegionalAnalysis = () => {
                              <td className="py-4 font-medium text-slate-600">{item.seller}</td>
                              <td className="py-4 font-black text-slate-900">₹{item.price.toLocaleString()}</td>
                              <td className="py-4 text-xs text-slate-400 font-medium">
-                                {new datetime(item.timestamp).toLocaleString()}
+                                {new Date(item.timestamp).toLocaleString()}
                              </td>
                           </tr>
                        ))}
