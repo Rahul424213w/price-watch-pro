@@ -203,7 +203,7 @@ const AlertsPage = () => {
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={async () => {
                       setSendingStatus(prev => ({ ...prev, [alert.asin]: 'sending' }));
                       await sendWhatsAppStatus(alert.asin);
@@ -211,18 +211,17 @@ const AlertsPage = () => {
                       setTimeout(() => setSendingStatus(prev => ({ ...prev, [alert.asin]: 'idle' })), 3000);
                     }}
                     disabled={sendingStatus[alert.asin] === 'sending'}
-                    className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all border shadow-sm group/btn relative ${
-                      sendingStatus[alert.asin] === 'success' ? 'bg-green-500 text-white border-green-600' : 
-                      sendingStatus[alert.asin] === 'sending' ? 'bg-slate-100 text-primary border-slate-200' :
-                      'bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-primary border-slate-100'
-                    }`}
+                    className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all border shadow-sm group/btn relative ${sendingStatus[alert.asin] === 'success' ? 'bg-green-500 text-white border-green-600' :
+                        sendingStatus[alert.asin] === 'sending' ? 'bg-slate-100 text-primary border-slate-200' :
+                          'bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-primary border-slate-100'
+                      }`}
                     title="Teleport to WhatsApp"
                   >
                     {sendingStatus[alert.asin] === 'success' ? <CheckCircle size={20} /> :
-                     sendingStatus[alert.asin] === 'sending' ? <Loader2 size={20} className="animate-spin" /> :
-                     <Plus size={20} className="group-hover/btn:rotate-90 transition-transform" />}
+                      sendingStatus[alert.asin] === 'sending' ? <Loader2 size={20} className="animate-spin" /> :
+                        <Plus size={20} className="group-hover/btn:rotate-90 transition-transform" />}
                   </button>
-                  <button 
+                  <button
                     onClick={() => deleteAlert(alert.id)}
                     className="w-12 h-12 flex items-center justify-center bg-slate-50 text-red-400 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all border border-slate-100 shadow-sm"
                   >

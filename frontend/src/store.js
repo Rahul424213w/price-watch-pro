@@ -120,6 +120,16 @@ const useStore = create((set, get) => ({
     }
   },
 
+  deleteAlert: async (alertId) => {
+    try {
+      await axios.delete(`${API_BASE}/alert/${alertId}`);
+      get().fetchAlerts();
+      get().fetchDashboardStats();
+    } catch (error) {
+      set({ error: error.response?.data?.detail || error.message });
+    }
+  },
+
   createAlert: async (asin, target) => {
     try {
       // Automatic Tracking: Ensure product is in universe
