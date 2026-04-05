@@ -12,6 +12,8 @@ from database import SessionLocal
 import models
 import scraper
 from ai_service import ai_service
+from buybox_change_detector import BuyBoxChangeDetector
+from whatsapp_alert_hook import WhatsAppAlertHook
 
 def send_alert_email(subject, body):
     """Utility to send security-hardened SMTP alert notifications"""
@@ -57,45 +59,44 @@ async def scrape_and_update(asin: str, pincode: str = "110001"):
 
             current_time = datetime.now(timezone.utc)
             
-            # 1. Detect Buy Box Change first (for alerts)
+            # 1. Detect Buy Box Change first (location-specific)
             last_buybox = db.query(models.PriceHistory)\
-                            .filter(models.PriceHistory.asin == asin, models.PriceHistory.is_buybox == True)\
+                            .filter(
+                                models.PriceHistory.asin == asin,
+                                models.PriceHistory.pincode == pincode,
+                                models.PriceHistory.is_buybox == True,
+                            )\
                             .order_by(models.PriceHistory.timestamp.desc())\
                             .first()
             
             bb_changed = False
-            if last_buybox and last_buybox.seller_name != details['buybox_seller']:
-                bb_changed = True
+            old_bb_state = {"price": 0.0, "seller_name": ""}
+            new_bb_state = {"price": float(details.get("current_price", 0)), "seller_name": details.get("buybox_seller", "")}
 
-            # 2. Add price points with Deduplication
+            if last_buybox:
+                old_bb_state = {"price": float(last_buybox.price), "seller_name": last_buybox.seller_name}
+                if last_buybox.seller_name != details['buybox_seller']:
+                    bb_changed = True
+
+            # -- WhatsApp Buy Box Alert Hook (Removed to prevent spam on refresh) --
+            # Automated Buy Box notifications are now disabled per user directive.
+            # Manual pulses can still be triggered from the matrix or alerts page.
+
+            # 2. Record a full snapshot for this scrape-run.
+            # Deduping individual seller rows makes the "latest snapshot" incomplete and breaks
+            # seller-matrix correctness. If you need storage control, do it via retention/rollups.
             for s in details['sellers']:
-                last_entry = db.query(models.PriceHistory)\
-                               .filter(models.PriceHistory.asin == asin, models.PriceHistory.seller_name == s['name'])\
-                               .order_by(models.PriceHistory.timestamp.desc())\
-                               .first()
-                
-                should_record = True
-                if last_entry:
-                    # Skip flat lines (no price change) only within a very short window (15 mins)
-                    # This ensures we have a dense history without massive storage bloat
-                    last_ts = last_entry.timestamp.replace(tzinfo=timezone.utc) if (last_entry.timestamp and last_entry.timestamp.tzinfo is None) else last_entry.timestamp
-                    is_recent = last_ts and (current_time - last_ts) < timedelta(minutes=15)
-                    
-                    if is_same_price and is_same_oos and is_recent:
-                        should_record = False
-                        
-                if should_record:
-                    new_entry = models.PriceHistory(
-                        asin=asin,
-                        seller_name=s['name'],
-                        price=s['price'],
-                        pincode=pincode,
-                        is_out_of_stock=details['is_out_of_stock'],
-                        is_buybox=s['isBuyBox'],
-                        is_fba=s['isFBA'],
-                        timestamp=current_time
-                    )
-                    db.add(new_entry)
+                new_entry = models.PriceHistory(
+                    asin=asin,
+                    seller_name=s['name'],
+                    price=s['price'],
+                    pincode=pincode,
+                    is_out_of_stock=details['is_out_of_stock'],
+                    is_buybox=s['isBuyBox'],
+                    is_fba=s['isFBA'],
+                    timestamp=current_time,
+                )
+                db.add(new_entry)
 
             # 3. Handle Alerts
             active_alerts = db.query(models.Alert).filter(models.Alert.asin == asin, models.Alert.is_triggered == False).all()
@@ -111,7 +112,10 @@ async def scrape_and_update(asin: str, pincode: str = "110001"):
                     trigger_hit = True
                 
                 elif alert.alert_type == "stock_change":
-                    last_oos = db.query(models.PriceHistory).filter(models.PriceHistory.asin == asin).order_by(models.PriceHistory.timestamp.desc()).offset(1).first()
+                    last_oos = db.query(models.PriceHistory)\
+                                 .filter(models.PriceHistory.asin == asin, models.PriceHistory.pincode == pincode)\
+                                 .order_by(models.PriceHistory.timestamp.desc())\
+                                 .offset(1).first()
                     if last_oos and last_oos.is_out_of_stock != details['is_out_of_stock']:
                         trigger_hit = True
 
@@ -121,13 +125,20 @@ async def scrape_and_update(asin: str, pincode: str = "110001"):
                     
                     # AI SMART ALERT ENHANCEMENT
                     try:
+                        alert_details = {
+                            "title": details.get('title', asin),
+                            "current_price": details.get('current_price'),
+                            "buybox_seller": details.get('buybox_seller'),
+                            "is_out_of_stock": details.get('is_out_of_stock')
+                        }
                         ai_explanation = await ai_service.generate_smart_alert_explanation(
                             asin=asin,
                             trigger_type=alert.alert_type,
-                            details={"price": details.get('current_price'), "seller": details.get('buybox_seller')}
+                            details=alert_details
                         )
                     except:
                         ai_explanation = "Manual intervention recommended for this price event."
+                        alert_details = {"title": asin, "current_price": details.get('current_price'), "buybox_seller": details.get('buybox_seller')}
 
                     print(f"[ALERT] Triggered {alert.alert_type} for {asin}. AI Insight: {ai_explanation}")
                     
@@ -148,6 +159,9 @@ Current Status: ₹{details['current_price']} | Buy Box: {details['buybox_seller
 Time: {current_time.strftime('%Y-%m-%d %H:%M:%S UTC')}
 """
                     send_alert_email(subject, body)
+                    
+                    # WhatsApp Smart Alert (Removed per user directive to prevent spam on refresh)
+                    # Triggered sentinels now only dispatch via SMTP to ensure non-invasive monitoring.
 
             db.commit()
             # Intelligent jitter to avoid pattern detection

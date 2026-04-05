@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, ArrowLeft, RefreshCw, AlertCircle, TrendingDown, Zap } from 'lucide-react';
+import { MapPin, ArrowLeft, RefreshCw, AlertCircle, TrendingDown, Zap, Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import useStore from '../store';
 
@@ -11,6 +11,7 @@ const RegionalAnalysis = () => {
   const { config } = useStore();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [product, setProduct] = useState(null);
 
   const fetchData = async () => {
@@ -26,6 +27,19 @@ const RegionalAnalysis = () => {
       console.error("Failed to fetch regional data", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegionalSync = async () => {
+    setIsSyncing(true);
+    try {
+      await axios.post(`http://localhost:8000/regional/scrape/${asin}`);
+      await fetchData();
+    } catch (err) {
+      console.error("Regional sync failed", err);
+      alert("Regional Intelligence Pulse Failed. Check network connectivity.");
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -58,9 +72,24 @@ const RegionalAnalysis = () => {
               <p className="text-neutral-custom font-medium mt-1 text-[10px]">Real-time comparison of price points and Buy Box sovereignty across multiple geographic nodes.</p>
            </div>
         </div>
-        <button onClick={fetchData} className="p-4 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all text-slate-600">
-           <RefreshCw size={20} />
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={fetchData} 
+            className="p-4 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all text-slate-600"
+            title="Refresh View"
+          >
+             <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+          </button>
+          
+          <button 
+            onClick={handleRegionalSync} 
+            disabled={isSyncing}
+            className="flex items-center gap-3 text-sm font-black text-white bg-primary px-8 py-4 rounded-xl uppercase tracking-tighter shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+          >
+            {isSyncing ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
+            {isSyncing ? 'Syncing Nodes...' : 'Update Data'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

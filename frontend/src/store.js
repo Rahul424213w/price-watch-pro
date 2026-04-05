@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 const useStore = create((set, get) => ({
   products: [],
@@ -21,13 +21,19 @@ const useStore = create((set, get) => ({
   error: null,
   clearError: () => set({ error: null }),
   searchResults: null,
-  
-  // Configuration (Persisted)
-  config: JSON.parse(localStorage.getItem('pricewatch_config')) || {
-    pincode: '110001',
-    frequency: '30',
-    locationName: 'New Delhi, DL',
-  },
+
+  config: (() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('pricewatch_config')) || {};
+      return {
+        pincode: stored.pincode || '110001',
+        frequency: stored.frequency || '30',
+        locationName: stored.locationName || 'New Delhi, DL',
+      };
+    } catch (e) {
+      return { pincode: '110001', frequency: '30', locationName: 'New Delhi, DL' };
+    }
+  })(),
 
   isGlobalSyncing: false,
   setGlobalSyncing: (syncing) => set({ isGlobalSyncing: syncing }),
@@ -39,6 +45,9 @@ const useStore = create((set, get) => ({
     get().fetchAllProducts();
     get().fetchDashboardStats();
   },
+
+  // Back-compat with older components
+  updateConfig: (newConfig) => get().setConfig(newConfig),
 
   fetchDashboardStats: async () => {
     const { pincode } = get().config;
@@ -78,23 +87,25 @@ const useStore = create((set, get) => ({
 
   trackProduct: async (asin, title, image, pincode) => {
     set({ isLoading: true });
-    console.log(`[PriceWatch Tracking] Activating ASIN: ${asin} at ${pincode}`);
+    // Platinum Fallback: Ensure pincode is Never undefined
+    const activePincode = pincode && pincode !== 'undefined' ? pincode : (get().config?.pincode || '110001');
+    console.log(`[PriceWatch Tracking] Activating ASIN: ${asin} at ${activePincode}`);
     try {
-      const response = await axios.post(`${API_BASE}/track?asin=${asin}&pincode=${pincode}`);
+      const response = await axios.post(`${API_BASE}/track?asin=${asin}&pincode=${activePincode}`);
       get().fetchDashboardStats();
       get().fetchAllProducts();
       set({ isLoading: false });
-      
+
       // Update local search results state if they exist
       const results = get().searchResults;
       if (results) {
-         const updatedResults = results.map(r => r.asin === asin ? {...r, is_tracked: true} : r);
-         set({ searchResults: updatedResults });
+        const updatedResults = results.map(r => r.asin === asin ? { ...r, is_tracked: true } : r);
+        set({ searchResults: updatedResults });
       }
-      
+
       return response.data;
     } catch (error) {
-       console.error(`[PriceWatch Tracking] Failed to activate ASIN:`, error.message);
+      console.error(`[PriceWatch Tracking] Failed to activate ASIN:`, error.message);
       set({ error: error.message, isLoading: false });
       return null;
     }
@@ -114,13 +125,13 @@ const useStore = create((set, get) => ({
       // Automatic Tracking: Ensure product is in universe
       const currentProducts = get().products;
       const isAlreadyTracked = currentProducts.some(p => p.asin === asin);
-      
+
       if (!isAlreadyTracked) {
         console.log(`[PriceWatch Automation] Auto-Activating ASIN: ${asin} for Sentinel`);
         const { pincode } = get().config;
         await get().trackProduct(asin, "", "", pincode);
       }
-      
+
       await axios.post(`${API_BASE}/alert?asin=${asin}&target_price=${target}`);
       get().fetchAlerts();
     } catch (error) {
@@ -133,8 +144,8 @@ const useStore = create((set, get) => ({
       const response = await axios.get(`${API_BASE}/analytics/volatility/${asin}`);
       return response.data;
     } catch (error) {
-       console.error("Volatility Error:", error);
-       return { score: 0 };
+      console.error("Volatility Error:", error);
+      return { score: 0 };
     }
   },
 
@@ -143,8 +154,8 @@ const useStore = create((set, get) => ({
       const response = await axios.get(`${API_BASE}/analytics/buybox/${asin}`);
       return response.data;
     } catch (error) {
-       console.error("Win Rate Error:", error);
-       return [];
+      console.error("Win Rate Error:", error);
+      return [];
     }
   },
 
@@ -174,6 +185,20 @@ const useStore = create((set, get) => ({
       get().fetchDashboardStats();
     } catch (error) {
       console.error("Deletion Error:", error);
+    }
+  },
+
+  resetDatabase: async () => {
+    // Wipes DB tables via backend endpoint
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(`${API_BASE}/system/reset`);
+      await get().fetchAllProducts();
+      await get().fetchDashboardStats();
+      await get().fetchAlerts();
+      set({ isLoading: false });
+    } catch (error) {
+      set({ error: error.response?.data?.detail || error.message, isLoading: false });
     }
   },
 
@@ -224,10 +249,84 @@ const useStore = create((set, get) => ({
       await get().fetchDashboardStats();
       set({ isGlobalSyncing: false });
     } catch (error) {
-       console.error("Sync Error:", error);
-       set({ isGlobalSyncing: false, error: "Global synchronization failed." });
+      console.error("Sync Error:", error);
+      set({ isGlobalSyncing: false, error: "Global synchronization failed." });
     }
-  }
+  },
+
+  // --- NEURAL INTELLIGENCE ACTIONS ---
+
+  getAIPricingAdvice: async (asin) => {
+    const { pincode } = get().config;
+    try {
+      const response = await axios.post(`${API_BASE}/ai/pricing-advisor/${asin}?pincode=${pincode}`);
+      return response.data.advice;
+    } catch (error) {
+      console.error("AI Pricing Error:", error);
+      return "Strategic analysis pending. Node synchronization required.";
+    }
+  },
+
+  getAIMarketInsight: async (asin) => {
+    try {
+      const response = await axios.post(`${API_BASE}/ai/market-insight/${asin}`);
+      return response.data.insight;
+    } catch (error) {
+      console.error("AI Market Error:", error);
+      return "Market dynamics currently stabilizing. Intelligence gathering in progress.";
+    }
+  },
+
+  getAIUndercutPrediction: async (asin) => {
+    try {
+      const response = await axios.post(`${API_BASE}/ai/undercut-prediction/${asin}`);
+      return response.data.prediction;
+    } catch (error) {
+      console.error("AI Prediction Error:", error);
+      return "Undercut baseline established. Behavioral analysis active.";
+    }
+  },
+
+  // --- WHATSAPP SMART ACTIONS ---
+
+  sendWhatsAppStatus: async (asin) => {
+    console.log(`[WhatsApp Pulse] Dispatching status for ASIN: ${asin}`);
+    try {
+      await axios.post(`${API_BASE}/api/whatsapp/send-status/${asin}`);
+    } catch (error) {
+      console.error("WhatsApp Status Error:", error);
+      const msg = error.response?.data?.detail || "Failed to dispatch WhatsApp status.";
+      set({ error: msg });
+    }
+  },
+
+  sendWhatsAppAnalysis: async (asin) => {
+    console.log(`[WhatsApp Intelligence] Dispatching neural analysis for ASIN: ${asin}`);
+    try {
+      await axios.post(`${API_BASE}/api/whatsapp/send-analysis/${asin}`);
+    } catch (error) {
+      console.error("WhatsApp Analysis Error:", error);
+      const msg = error.response?.data?.detail || "Neural report dispatch failed.";
+      set({ error: msg });
+    }
+  },
+
+  subscribeWhatsApp: async (asin, number, label) => {
+    console.log(`[WhatsApp Sentinel] Registering ${number} for ASIN: ${asin}`);
+    try {
+      await axios.post(`${API_BASE}/api/whatsapp/subscribe`, {
+        product_id: asin,
+        whatsapp_number: number,
+        label: label
+      });
+      console.log(`[WhatsApp Sentinel] Subscription active for ${asin}`);
+      return true;
+    } catch (error) {
+      console.error("WhatsApp Subscription Error:", error.response?.data?.detail || error.message);
+      set({ error: error.response?.data?.detail || "Failed to subscribe for WhatsApp alerts." });
+      return false;
+    }
+  },
 
 }));
 

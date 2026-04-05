@@ -1,46 +1,87 @@
-# Dependencies
-node_modules/
-backend/venv/
-backend/.env
-.env
+# PriceWatch Pro - Production-Grade Gitignore Protocol
 
-# Build outputs
+# --- Environments & Secrets ---
+.env
+.env.*
+!.env.example
+backend/.env
+backend/venv/
+venv/
+env/
+ENV/
+.python-version
+
+# --- Node (Frontend) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+.eslintcache
+.stylelintcache
+.prettiercache
 frontend/dist/
+frontend/node_modules/
 dist/
 
-# Python artifacts
+# --- Python (Backend) ---
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
 backend/__pycache__/
 
-# Database
+# --- Database ---
 *.db
 *.db-shm
 *.db-wal
 pricewatch.db
 backend/pricewatch.db
 
-# Logs and debug files
+# --- Logs & Debug Dumps ---
 *.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-lerna-debug.log*
 amazon_debug.html
 user_query_debug.html
 backend/amazon_debug.html
+user_query_debug.html
 tmp/
+temp/
+coverage/
 
-# Editor/IDE settings
+# --- IDE & System ---
 .vscode/
 .idea/
+*.swp
+*.swo
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
-
-# OS files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# --- AI & Tooling ---
+.gemini/
+antigravity/
+.agent/
+.agents/

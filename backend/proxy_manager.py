@@ -15,7 +15,7 @@ class ScraperAPIProvider(ProxyProvider):
         self.base_url = "http://api.scraperapi.com"
 
     def get_proxy_url(self, target_url: str, keep_headers: bool = False) -> str:
-        url = f"{self.base_url}?api_key={self.api_key}&url={target_url}&render=false"
+        url = f"{self.base_url}?api_key={self.api_key}&url={target_url}&render=false&country_code=in"
         if keep_headers:
             url += "&keep_headers=true"
         return url
@@ -53,9 +53,12 @@ class ProxyManager:
                     if response.status_code == 200:
                         return response
                     
-                    if response.status_code in [403, 429, 500]:
-                        print(f"[ProxyManager] ScraperAPI returned {response.status_code}, retrying...")
-                        await asyncio.sleep(random.uniform(1, 3) * (attempt + 1))
+                    # Implement exponential backoff for 403, 429, 500 or CAPTCHA hints
+                    is_captcha = "captcha" in response.text.lower() or "detect" in response.text.lower()
+                    if response.status_code in [403, 429, 500] or is_captcha:
+                        backoff = (2 ** attempt) + random.uniform(1, 3)
+                        print(f"[ProxyManager] Issue detected ({response.status_code} / Captcha: {is_captcha}). Backoff: {backoff:.2f}s")
+                        await asyncio.sleep(backoff)
                         continue
                         
                 except Exception as e:

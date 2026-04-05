@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import useStore from '../store';
 import { formatLocalizedDate } from '../utils/dateUtils';
 import RegionalModal from '../components/RegionalModal';
+import IntelligenceFeed from '../components/IntelligenceFeed';
 
 const Home = () => {
   const { dashboardStats, fetchDashboardStats, products, fetchAllProducts, config, setConfigOpen, syncAllProducts, exportReport } = useStore();
@@ -243,35 +244,35 @@ const Home = () => {
          <div className="flex flex-col gap-8">
             <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter italic px-1">Tactical Side-Ops</h3>
             
-            <div className="glass-card p-6 rounded-3xl bg-slate-900 border-none relative overflow-hidden shadow-2xl">
+            <div className="glass-card p-6 rounded-3xl bg-white/90 border-slate-100 relative overflow-hidden shadow-xl">
                <div className="relative z-10">
-                  <h4 className="text-slate-400 font-black uppercase tracking-widest text-[10px] mb-4 opacity-70">Market Integrity Index</h4>
+                  <h4 className="text-slate-500 font-black uppercase tracking-widest text-[10px] mb-4 opacity-70">Market Integrity Index</h4>
                   <div className="flex flex-col gap-4">
                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">In-Stock Rate</span>
+                        <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">In-Stock Rate</span>
                         <span className="text-secondary text-xs font-black uppercase">{dashboardStats.in_stock_rate || 0}%</span>
                       </div>
-                      <div className="w-full h-1 bg-white/10 rounded-full">
+                      <div className="w-full h-1 bg-slate-100 rounded-full">
                          <div 
-                           className="h-full bg-secondary rounded-full shadow-[0_0_10px_#FF6D00]" 
+                           className="h-full bg-secondary rounded-full shadow-sm" 
                            style={{ width: `${dashboardStats.in_stock_rate || 0}%` }}
                          ></div>
                       </div>
                       <div className="flex justify-between items-center mt-2">
-                         <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Buy Box Mastery</span>
+                         <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Buy Box Mastery</span>
                          <span className="text-primary text-xs font-black uppercase">{dashboardStats.buybox_coverage_rate || 0}%</span>
                       </div>
                       <div className="flex gap-1">
                          {[1,2,3,4,5,6,7,8,9,10].map(i => (
                             <div 
                                key={i} 
-                               className={`flex-1 h-3 rounded-sm transition-all duration-500 ${i <= (dashboardStats.buybox_coverage_rate / 10) ? 'bg-primary' : 'bg-white/10'}`}
+                               className={`flex-1 h-3 rounded-sm transition-all duration-500 ${i <= (dashboardStats.buybox_coverage_rate / 10) ? 'bg-primary shadow-sm' : 'bg-slate-100'}`}
                             ></div>
                          ))}
                       </div>
                    </div>
                 </div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl"></div>
              </div>
 
              {/* Regional Analysis Section */}
@@ -296,6 +297,8 @@ const Home = () => {
                    <Link to="/regional-matrix" className="text-center text-[8px] font-black text-primary uppercase tracking-[0.2em] mt-2 hover:underline">Expand Full Universe</Link>
                 </div>
              </div>
+
+             <IntelligenceFeed />
 
              <div className="glass-card p-6 rounded-3xl border-white/20 bg-white shadow-xl">
                 <h4 className="text-slate-800 font-black uppercase tracking-widest text-[10px] mb-4 opacity-100">Combat Protocols</h4>

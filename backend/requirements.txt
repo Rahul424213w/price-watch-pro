@@ -1,3 +1,6 @@
+playwright
+jinja2
+matplotlib
 fastapi
 uvicorn
 sqlalchemy
@@ -6,6 +9,9 @@ apscheduler
 pydantic
 python-dotenv
 curl_cffi
-xhtml2pdf
+reportlab
+svglib
 psycopg2-binary
 groq
+twilio
+httpx

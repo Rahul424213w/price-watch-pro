@@ -1,38 +1,43 @@
-# Technical Documentation - PriceWatch Pro Intelligence Engine
+# Technical Documentation - PriceWatch Pro (v4.0.2)
 
-## 🌍 Scraping Infrastructure
+## 🌍 Scraping Infrastructure & Resilience
 
 ### 1. Anti-Bot Strategy: curl_cffi + ScraperAPI
-PriceWatch Pro uses a dual-layer defense bypass:
-- **curl_cffi (Library)**: Emulates the TLS fingerprint of modern browsers (Chrome 110+). This bypasses low-level network fingerprinting that standard libraries like `requests` or `httpx` fail.
-- **ScraperAPI (Proxy)**: Provides over 40M+ residential/datacenter IPs, automatic header rotation, and CAPTCHA solving. Every request to Amazon is routed through a unique proxy node.
+- **TLS/JA3 Fingerprinting**: Standard libraries (`requests`/`httpx`) are detected by Amazon's shield protocols due to low-level network patterns. We use **`curl_cffi`** to mimic modern Chrome 110+ TLS handshake signatures.
+- **Proxy Management**: Every request is routed through **ScraperAPI**, which manages 40M+ residential/datacenter IPs, automatic header rotation, and CAPTCHA solving at the infrastructure layer.
 
-### 2. Location Simulation
-- **Mechanism**: Use of `p13n-sc-address-zip` and `i18n-prefs` cookies.
-- **Implementation**: The `scraper.py` injects the target PIN code into the request cookie header. This forces Amazon to show regional pricing, Buy Box winners, and stock status for that specific location.
+### 2. Strategic Location Simulation
+- **Method**: Cookie injection.
+- **Protocol**: Setting `p13n-sc-address-zip` and `i18n-prefs` headers allows our system to bypass Amazon's Geo-IP logic and see real-time pricing/buybox changes for any Indian PIN code.
 
-## 📊 Data Extraction & Reliability
+## 🧠 Neural Strategic Intelligence Layer
 
-### 1. Advanced Price Detection
-- **Multi-Selector Logic**: We use 6+ hierarchical CSS selectors to catch prices in diverse Amazon layouts (Standard, Deal, Buy Box Inside, Core Price).
-- **Hidden Price Parsing**: "See price in cart" cases are handled by extracting `buyingPrice` from the embedded page JSON blobs using regex fallback if CSS selectors return null.
-- **Out of Stock Detection**: Explicit checks for "currently unavailable" text and fallback to zero-price validation ensure accurate stock status.
+### 1. Groq Cloud (Llama-3-70B)
+- **Engine**: Llama-3-70B running on Groq’s LPU (Language Processing Unit) for sub-second, low-latency market analysis.
+- **Strategic Advisor logic**:
+  - Raw telemetry (Price History, Buy Box status, Seller FBA flags) is synthesized into a custom prompt.
+  - The model performs **Behavioral Prediction** (undercutting alerts) and **Competitive Strategy** (pricing suggestions).
 
-### 2. Marketplace Intelligence (Seller Matrix)
-- **Buy Box Priority**: The system identifies the current Buy Box holder and treats them as the primary data point.
-- **Seller Comparison**: We extract the Top 5 alternate sellers (via `#mbc-box-all`) to calculate market dominance and win rates.
+### 2. Live Intelligence Stream (Terminal)
+- **Implementation**: Frontend logic in `IntelligenceFeed.jsx` simulates the real-time background operation of the multi-node scraper fleet.
+- **Log Types**: `[SUCCESS]`, `[PROXY ROTATION]`, `[SENTINEL TRIGGER]`, and `[NEURAL SYNC]`.
 
-## 📈 Analytics & Calculations
+## 📊 Analytics Framework
 
-### 1. Price Volatility Score (0-100)
-Calculated using the **Coefficient of Variation (CV)**:
-`Score = min(100, (Standard Deviation / Mean Price) * 1000)`
-High scores indicate frequent/large price swings, alerting users to unstable market conditions.
+### 1. Market Health Scoring
+- **Volatility Score (0-100)**: Uses the **Coefficient of Variation (CV)**:
+  `Score = min(100, (Standard Deviation / Mean Price) * 1000)`
+- **Buy Box Win Rate**: Percentage calculation per seller based on historical Buy Box status occurrences across tracked regional nodes.
 
-### 2. Buy Box Win Rate (%)
-`Win Rate = (Count of Buy Box occurrences for Seller / Total Scrapes for ASIN) * 100`
+## 🎨 UI Architecture: Command Center Light-Mode
 
-## 📡 Pipeline Scalability
+- **Glassmorphism Theme**: Uses semi-transparent white containers (`bg-white/80`) with backdrop blur filters and high-contrast slate text (`text-slate-900`) for accessibility and "Mission-Critical" aesthetics.
+- **Zustand Store**: Centralized state management handles real-time data flow for the "Command Center" dashboard and product detail views.
 
-- **Concurrent Scheduler**: Uses `apscheduler` with an `asyncio.Semaphore(3)`. This limits peak network load while allowing multiple assets to be analyzed in parallel.
-- **PostgreSQL Support**: The `database.py` allows seamless swapping from SQLite to PostgreSQL for high-volume enterprise deployments using the `DATABASE_URL` environment variable.
+## 📡 Database & Scalability
+
+- **SQLAlchemy ORM**: Infrastructure-agnostic data layer.
+- **Models**:
+  - `Product`: Metadata for tracked Amazon ASINs.
+  - `PriceHistory`: Time-series telemetry (ASIN, Seller, Price, Pincode, Buy Box).
+  - `Alerts`: Monitoring sentinels for automated triggers.
